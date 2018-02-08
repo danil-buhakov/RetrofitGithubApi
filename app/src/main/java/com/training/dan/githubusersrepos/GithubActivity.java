@@ -7,13 +7,18 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.training.dan.githubusersrepos.Model.Repository;
 import com.training.dan.githubusersrepos.Retrofit.GithubRetrofit;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -22,8 +27,9 @@ import retrofit2.Response;
 
 public class GithubActivity extends AppCompatActivity {
     private static final String TAG = "GithubActivity";
-    RecyclerView mRecyclerView;
-    ProgressDialog mProgressDialog;
+    private RecyclerView mRecyclerView;
+    private ProgressDialog mProgressDialog;
+    private List<Repository> mRepositories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +42,8 @@ public class GithubActivity extends AppCompatActivity {
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.setTitle("Loading");
         mProgressDialog.setMessage("Wait please...");
+        mRepositories = new ArrayList<>();
+        mRecyclerView.setAdapter(new RepositoryAdapter(mRepositories));
     }
 
     @Override
@@ -52,15 +60,18 @@ public class GithubActivity extends AppCompatActivity {
                         .enqueue(new Callback<List<Repository>>() {
                             @Override
                             public void onResponse(Call<List<Repository>> call, Response<List<Repository>> response) {
-                                Log.i(TAG,"onResponse");
+                                Log.i(TAG,"onResponse "+response.body().size());
                                 Toast.makeText(GithubActivity.this,"onResponse",Toast.LENGTH_SHORT).show();
                                 mProgressDialog.dismiss();
+                                mRepositories.clear();
+                                mRepositories.addAll(response.body());
+                                mRecyclerView.getAdapter().notifyDataSetChanged();
                             }
 
                             @Override
                             public void onFailure(Call<List<Repository>> call, Throwable t) {
                                 Log.i(TAG,"onFailure");
-                                Toast.makeText(GithubActivity.this,"onFailure",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(GithubActivity.this,"onResponse",Toast.LENGTH_SHORT).show();
                                 mProgressDialog.dismiss();
                             }
                         });
@@ -73,5 +84,47 @@ public class GithubActivity extends AppCompatActivity {
             }
         });
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private class RepositoryHolder extends RecyclerView.ViewHolder{
+        private TextView mTextView;
+
+        public RepositoryHolder(View itemView) {
+            super(itemView);
+            Log.i(TAG,"RepositoryHolder");
+            mTextView = (TextView) itemView.findViewById(R.id.text_view);
+        }
+
+        public void bindRepository(Repository repository){
+            Log.i(TAG,"bindRepository");
+            mTextView.setText(repository.getName());
+        }
+    }
+
+    private class RepositoryAdapter extends RecyclerView.Adapter<RepositoryHolder>{
+        private List<Repository> mRepositoryList;
+
+        public RepositoryAdapter(List<Repository> repositories){
+            mRepositoryList = repositories;
+            Log.i(TAG,"RepositoryAdapter " + mRepositoryList.size());
+        }
+
+        @Override
+        public RepositoryHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            Log.i(TAG,"onCreateViewHolder");
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.repo_item,parent,false);
+            return new RepositoryHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(RepositoryHolder holder, int position) {
+            Log.i(TAG,"onBindViewHolder");
+            holder.bindRepository(mRepositoryList.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return mRepositoryList.size();
+        }
     }
 }
