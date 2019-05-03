@@ -14,19 +14,17 @@ import static com.training.dan.githubusersrepos.GithubActivity.TAG;
 
 public class RepositoryHolder extends RecyclerView.ViewHolder{
     private TextView mTextView;
-    private View mItemView;
 
     public RepositoryHolder(View itemView) {
         super(itemView);
         Log.i(TAG,"RepositoryHolder");
-        mItemView = itemView;
         mTextView = (TextView) itemView.findViewById(R.id.text_view);
     }
 
     public void bindRepository(final Repository repository){
         Log.i(TAG,"bindRepository");
         mTextView.setText(repository.getName());
-        mItemView.setOnClickListener(new View.OnClickListener() {
+        itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repository.getHtmlUrl()));

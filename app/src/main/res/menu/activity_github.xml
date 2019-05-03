@@ -6,4 +6,8 @@
         android:title="@string/search_title"
         app:actionViewClass="android.support.v7.widget.SearchView"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/clicker"
+        android:title="Click me"
+        app:showAsAction="never" />
 </menu>
