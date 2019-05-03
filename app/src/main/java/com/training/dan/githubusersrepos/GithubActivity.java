@@ -62,12 +62,17 @@ public class GithubActivity extends AppCompatActivity {
                         .enqueue(new Callback<List<Repository>>() {
                             @Override
                             public void onResponse(Call<List<Repository>> call, Response<List<Repository>> response) {
-                                Log.i(TAG,"onResponse "+response.body().size());
-                                Toast.makeText(GithubActivity.this,"onResponse",Toast.LENGTH_SHORT).show();
-                                mProgressDialog.dismiss();
-                                mRepositories.clear();
-                                mRepositories.addAll(response.body());
-                                mRecyclerView.getAdapter().notifyDataSetChanged();
+                                if(response.isSuccessful()) {
+                                    Log.i(TAG, "onResponse " + response.body().size());
+                                    Toast.makeText(GithubActivity.this, "onResponse", Toast.LENGTH_SHORT).show();
+                                    mProgressDialog.dismiss();
+                                    mRepositories.clear();
+                                    mRepositories.addAll(response.body());
+                                    mRecyclerView.getAdapter().notifyDataSetChanged();
+                                } else {
+                                    Toast.makeText(GithubActivity.this, "fail response", Toast.LENGTH_SHORT).show();
+                                    mProgressDialog.dismiss();
+                                }
                             }
 
                             @Override
