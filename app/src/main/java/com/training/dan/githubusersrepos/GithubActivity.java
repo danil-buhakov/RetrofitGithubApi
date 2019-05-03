@@ -35,19 +35,19 @@ public class GithubActivity extends AppCompatActivity {
         init();
     }
 
-    private void init(){
+    private void init() {
         mRepositories = new ArrayList<>();
         setupRecyclerView();
         setupProgressDialog();
     }
 
-    private void setupProgressDialog(){
+    private void setupProgressDialog() {
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setTitle("Loading");
         mProgressDialog.setMessage("Wait please...");
     }
 
-    private void setupRecyclerView(){
+    private void setupRecyclerView() {
         mRecyclerView = findViewById(R.id.recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.setAdapter(new RepositoryAdapter(mRepositories));
@@ -83,7 +83,7 @@ public class GithubActivity extends AppCompatActivity {
                             @Override
                             public void onFailure(Call<List<Repository>> call, Throwable t) {
                                 Log.i(TAG, "onFailure");
-                                Toast.makeText(GithubActivity.this, "onResponse", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
                                 mProgressDialog.dismiss();
                             }
                         });
@@ -92,6 +92,28 @@ public class GithubActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(String newText) {
+                if (newText.length() > 2)
+                    GithubRetrofit.getApi().getUsersRepo(newText)
+                            .enqueue(new Callback<List<Repository>>() {
+                                @Override
+                                public void onResponse(Call<List<Repository>> call, Response<List<Repository>> response) {
+                                    if (response.isSuccessful()) {
+                                        Log.i(TAG, "onResponse " + response.body().size());
+                                        Toast.makeText(GithubActivity.this, "onResponse", Toast.LENGTH_SHORT).show();
+                                        mRepositories.clear();
+                                        mRepositories.addAll(response.body());
+                                        mRecyclerView.getAdapter().notifyDataSetChanged();
+                                    } else {
+                                        Toast.makeText(GithubActivity.this, "fail response", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<List<Repository>> call, Throwable t) {
+                                    Log.i(TAG, "onFailure");
+                                    Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 return false;
             }
         });
@@ -100,7 +122,7 @@ public class GithubActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.clicker:
                 Toast.makeText(this, "clicker clicked", Toast.LENGTH_SHORT).show();
                 break;
