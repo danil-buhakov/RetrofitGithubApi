@@ -18,6 +18,10 @@ import com.training.dan.githubusersrepos.view.RepositoryAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -27,11 +31,13 @@ public class GithubActivity extends AppCompatActivity {
     private RecyclerView mRecyclerView;
     private ProgressDialog mProgressDialog;
     private List<Repository> mRepositories;
+    private CompositeDisposable compositeDisposable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_github);
+        compositeDisposable = new CompositeDisposable();
         init();
     }
 
@@ -63,57 +69,46 @@ public class GithubActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 Log.i(TAG, "onQueryTextSubmit " + query);
                 mProgressDialog.show();
-                GithubRetrofit.getApi().getUsersRepo(query)
-                        .enqueue(new Callback<List<Repository>>() {
-                            @Override
-                            public void onResponse(Call<List<Repository>> call, Response<List<Repository>> response) {
-                                if (response.isSuccessful()) {
-                                    Log.i(TAG, "onResponse " + response.body().size());
+                compositeDisposable.add(GithubRetrofit.getApi().getUsersRepo(query)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(list -> {
+                                    Log.i(TAG, "onResponse " + list.size());
                                     Toast.makeText(GithubActivity.this, "onResponse", Toast.LENGTH_SHORT).show();
                                     mProgressDialog.dismiss();
                                     mRepositories.clear();
-                                    mRepositories.addAll(response.body());
+                                    mRepositories.addAll(list);
                                     mRecyclerView.getAdapter().notifyDataSetChanged();
-                                } else {
-                                    Toast.makeText(GithubActivity.this, "fail response", Toast.LENGTH_SHORT).show();
+                                },
+                                throwable -> {
+                                    Log.i(TAG, "onFailure");
+                                    Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
                                     mProgressDialog.dismiss();
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Call<List<Repository>> call, Throwable t) {
-                                Log.i(TAG, "onFailure");
-                                Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
-                                mProgressDialog.dismiss();
-                            }
-                        });
+                                })
+                );
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (newText.length() > 2)
-                    GithubRetrofit.getApi().getUsersRepo(newText)
-                            .enqueue(new Callback<List<Repository>>() {
-                                @Override
-                                public void onResponse(Call<List<Repository>> call, Response<List<Repository>> response) {
-                                    if (response.isSuccessful()) {
-                                        Log.i(TAG, "onResponse " + response.body().size());
+                    compositeDisposable.add(GithubRetrofit.getApi().getUsersRepo(newText)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(list -> {
+                                        Log.i(TAG, "onResponse " + list.size());
                                         Toast.makeText(GithubActivity.this, "onResponse", Toast.LENGTH_SHORT).show();
+                                        mProgressDialog.dismiss();
                                         mRepositories.clear();
-                                        mRepositories.addAll(response.body());
+                                        mRepositories.addAll(list);
                                         mRecyclerView.getAdapter().notifyDataSetChanged();
-                                    } else {
-                                        Toast.makeText(GithubActivity.this, "fail response", Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Call<List<Repository>> call, Throwable t) {
-                                    Log.i(TAG, "onFailure");
-                                    Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                                    },
+                                    throwable -> {
+                                        Log.i(TAG, "onFailure");
+                                        Toast.makeText(GithubActivity.this, "onFail", Toast.LENGTH_SHORT).show();
+                                        mProgressDialog.dismiss();
+                                    })
+                    );
                 return false;
             }
         });
@@ -128,5 +123,11 @@ public class GithubActivity extends AppCompatActivity {
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        compositeDisposable.dispose();
     }
 }
