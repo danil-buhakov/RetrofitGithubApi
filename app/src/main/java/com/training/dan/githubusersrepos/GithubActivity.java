@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.training.dan.githubusersrepos.Model.Repository;
 import com.training.dan.githubusersrepos.Retrofit.GithubRetrofit;
+import com.training.dan.githubusersrepos.Retrofit.IGithub;
 import com.training.dan.githubusersrepos.view.RepositoryAdapter;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
 
 public class GithubActivity extends AppCompatActivity {
     public static final String TAG = "GithubActivity";
@@ -32,12 +34,14 @@ public class GithubActivity extends AppCompatActivity {
     private ProgressDialog mProgressDialog;
     private List<Repository> mRepositories;
     private CompositeDisposable compositeDisposable;
+    private IGithub githubApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_github);
         compositeDisposable = new CompositeDisposable();
+        githubApi = DaggerGithubComponent.create().getGithubApi();
         init();
     }
 
@@ -69,7 +73,8 @@ public class GithubActivity extends AppCompatActivity {
             public boolean onQueryTextSubmit(String query) {
                 Log.i(TAG, "onQueryTextSubmit " + query);
                 mProgressDialog.show();
-                compositeDisposable.add(GithubRetrofit.getApi().getUsersRepo(query)
+                compositeDisposable.add(
+                        githubApi.getUsersRepo(query)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(list -> {
@@ -92,7 +97,7 @@ public class GithubActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextChange(String newText) {
                 if (newText.length() > 2)
-                    compositeDisposable.add(GithubRetrofit.getApi().getUsersRepo(newText)
+                    compositeDisposable.add(githubApi.getUsersRepo(newText)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(list -> {
