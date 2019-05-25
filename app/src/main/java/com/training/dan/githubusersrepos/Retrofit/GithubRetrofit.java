@@ -7,6 +7,7 @@ import javax.inject.Inject;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -17,12 +18,14 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class GithubRetrofit {
     private static final String BASE_URL = "https://api.github.com";
 
-    @Inject
-    public GithubRetrofit(){}
-
     @Provides
     public IGithub getApi(Retrofit retrofit) {
         return retrofit.create(IGithub.class);
+    }
+
+    @Provides
+    public IFacebook getFacebookApi(Retrofit retrofit) {
+        return retrofit.create(IFacebook.class);
     }
 
     @Provides

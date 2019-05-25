@@ -13,6 +13,7 @@ import android.widget.Toast;
 
 import com.training.dan.githubusersrepos.Model.Repository;
 import com.training.dan.githubusersrepos.Retrofit.GithubRetrofit;
+import com.training.dan.githubusersrepos.Retrofit.IFacebook;
 import com.training.dan.githubusersrepos.Retrofit.IGithub;
 import com.training.dan.githubusersrepos.view.RepositoryAdapter;
 
@@ -35,13 +36,19 @@ public class GithubActivity extends AppCompatActivity {
     private List<Repository> mRepositories;
     private CompositeDisposable compositeDisposable;
     private IGithub githubApi;
+    private IFacebook facebookApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_github);
         compositeDisposable = new CompositeDisposable();
-        githubApi = DaggerGithubComponent.create().getGithubApi();
+        GithubComponent component = DaggerGithubComponent
+                .builder()
+                .githubRetrofit(new GithubRetrofit())
+                .build();
+        githubApi = component.getGithubApi();
+        facebookApi = component.getFacebookApi();
         init();
     }
 
